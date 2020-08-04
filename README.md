@@ -1,2 +1,2 @@
 # CaseStudy2DDS
-My individual project = Case Study 2
+My individual project - Case Study 2
