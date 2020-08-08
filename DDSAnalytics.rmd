@@ -6,6 +6,18 @@ output:
   html_document: default
   word_document: default
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(naniar)
+library(dplyr)
+library(ggplot2)
+library(ggcorrplot)
+library(gridExtra)
+library(grid)
+library(ggthemes)
+library(sqldf)
+library(plotly) 
+```
 Read Case Study 2 dataset
 ```{r}
 DDSAnalytics  = read.csv("C:/Users/ouska/Desktop/SMU/DOING DS/CaseStudy2_2_2_2_2_2_2/CaseStudy2-data.csv",header = TRUE)
