@@ -1,0 +1,13 @@
+---
+title: "Talent Management Solutions"
+author: "Ousman"
+date: "8/7/2020"
+output:
+  html_document: default
+  word_document: default
+---
+Read Case Study 2 dataset
+```{r}
+DDSAnalytics  = read.csv("C:/Users/ouska/Desktop/SMU/DOING DS/CaseStudy2_2_2_2_2_2_2/CaseStudy2-data.csv",header = TRUE)
+head(DDSAnalytics)
+```
