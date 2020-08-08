@@ -18,11 +18,20 @@ library(ggthemes)
 library(sqldf)
 library(plotly) 
 ```
-Read Case Study 2 dataset
+
+# Read Case Study 2 dataset
 ```{r}
 DDSAnalytics  = read.csv("C:/Users/ouska/Desktop/SMU/DOING DS/CaseStudy2_2_2_2_2_2_2/CaseStudy2-data.csv",header = TRUE)
 head(DDSAnalytics)
 ```
+
+# Data Description
+```{r}
+summary(DDSAnalytics)
+```
+
+## Original Structure
 ```{r}
 str(DDSAnalytics)
 ```
+
