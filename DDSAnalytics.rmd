@@ -23,3 +23,6 @@ Read Case Study 2 dataset
 DDSAnalytics  = read.csv("C:/Users/ouska/Desktop/SMU/DOING DS/CaseStudy2_2_2_2_2_2_2/CaseStudy2-data.csv",header = TRUE)
 head(DDSAnalytics)
 ```
+```{r}
+str(DDSAnalytics)
+```
