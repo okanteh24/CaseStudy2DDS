@@ -1,0 +1,362 @@
+---
+title: "Talent Management Solutions"
+author: "Ousman"
+date: "8/7/2020"
+output:
+  html_document: default
+  word_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(naniar)
+library(dplyr)
+library(ggplot2)
+library(ggcorrplot)
+library(gridExtra)
+library(grid)
+library(ggthemes)
+library(sqldf)
+library(plotly)
+library(olsrr)
+library(knitr)
+library(readxl)
+library(dygraphs)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(forecast)
+library(xtable)
+library(kableExtra)
+library(readr)
+library(reshape2)
+library(wordcloud2)
+library(investr)
+library(MASS)
+library(caret) 
+library(class)
+library(fastDummies)  
+library(data.table)
+```
+Read Case Study 2 dataset
+```{r}
+CaseStudy2_data  = read.csv("C:/Users/ouska/Desktop/SMU/DOING DS/CaseStudy2_2_2_2_2_2_2/CaseStudy2-data.csv",header = TRUE)
+head(CaseStudy2_data)
+```
+```{r}
+str(CaseStudy2_data)
+```
+ 
+
+ 
+
+
+```{r}
+sapply(CaseStudy2_data, function(x) sum(is.na(x)))
+```
+
+
+
+```{r}
+plot(CaseStudy2_data$YearsAtCompany);summary(CaseStudy2_data$YearsAtCompany)
+```
+
+
+
+```{r}
+columns_to_drop = c("ID", "EmployeeNumber", "Over18", "StandardHours", "EmployeeCount" )
+CaseStudy2_data = CaseStudy2_data[,!(names(CaseStudy2_data) %in% columns_to_drop)]
+```
+
+
+```{r}
+library(ggplot2)
+theme_set(theme_minimal())  # pre-set the bw theme.
+ 
+g <- ggplot(CaseStudy2_data, aes(JobRole))
+g + geom_bar(aes(fill=Attrition), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(title="Histogram on Job Role and Attrition") 
+```
+
+looks like we should do a log transformaiton
+```{r}
+hist(CaseStudy2_data$MonthlyIncome)
+```
+__log Trasformaitons__
+```{r}
+#attach(CaseStudy2_data)
+CaseStudy2_data$Attrition <- factor(CaseStudy2_data$Attrition)
+CaseStudy2_data$MonthlyIncome = log(CaseStudy2_data$MonthlyIncome)
+CaseStudy2_data$Attrition = as.numeric(as.factor(CaseStudy2_data$Attrition))-1
+```
+
+
+
+
+
+```{r}
+library(corrplot)
+number_variables = sapply(CaseStudy2_data, is.numeric) 
+corrmatrix =  cor(CaseStudy2_data[,number_variables], )
+#top = colnames(corrmatrix)[apply(corrmatrix, 1, function (x) which(x==max(x[abs(x)>.9])))]
+#corrmatrix =  cor(CaseStudy2_data[,top], )
+corrplot(corrmatrix, method="color")
+```
+
+
+
+```{r}
+library(gridExtra)
+library(ggplot2)
+
+graph1= ggplot(CaseStudy2_data, aes(x=EducationField)) + 
+  geom_bar(aes(y = ..prop.., group=1)) + 
+  ggtitle("EducationField") + 
+  xlab("EducationField") + 
+  coord_flip()
+graph2= ggplot(CaseStudy2_data, aes(x=JobRole)) + 
+  geom_bar(aes(y = ..prop.., group=1)) + 
+  ggtitle("JobRole") + 
+  xlab("JobRole") + 
+  coord_flip()
+graph3 = ggplot(CaseStudy2_data, aes(x=MaritalStatus)) + 
+  geom_bar(aes(y = ..prop.., group=1)) + 
+  ggtitle("MaritalStatus") + 
+  xlab("MaritalStatus") + 
+  coord_flip()
+graph4 = ggplot(CaseStudy2_data, aes(x=JobRole)) + 
+  geom_bar(aes(y = ..prop.., group=1)) + 
+  ggtitle("JobRole") + 
+  xlab("JobRole") + 
+  coord_flip()
+graph5 = ggplot(CaseStudy2_data, aes(x=Department)) + 
+  geom_bar(aes(y = ..prop.., group=1)) + 
+  ggtitle("Department") + 
+  xlab("Department") + 
+  coord_flip()
+graph6 = ggplot(CaseStudy2_data, aes(x=BusinessTravel)) + 
+  geom_bar(aes(y = ..prop.., group=1)) + 
+  ggtitle("BusinessTravel") + 
+  xlab("BusinessTravel") + 
+  coord_flip()
+grid.arrange(graph1, graph2, graph3, graph4,
+             graph5, graph6, ncol=2)
+```
+
+
+
+# Model Fitting
+
+
+
+
+```{r}
+stepwise = step(glm(Attrition ~ ., data=CaseStudy2_data, family = binomial(link="logit")), trace=0, direction='both',test="Chisq")
+formula(stepwise)
+summary(stepwise)
+```
+
+__test train split__
+
+```{r}
+smp_size <- floor(0.7 * nrow(CaseStudy2_data))
+## set the seed to make your partition reproducible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(CaseStudy2_data)), size = smp_size)
+train = CaseStudy2_data[train_ind,]
+test =  CaseStudy2_data[-train_ind,]
+dim(train)
+dim(test)
+```
+
+
+
+
+
+### Logistic Model
+after several stepwise regression and model selection experiments... 
+
+```{r}
+logit_model <- glm(Attrition ~ OverTime+MonthlyIncome + MaritalStatus + JobInvolvement+JobRole ,
+                   family=binomial(link="logit"),data=train)
+logit_pred = predict(logit_model, newdata=test, type='response')
+logit_pred = ifelse(logit_pred > 0.5 ,1,0)
+print(summary(logit_model))
+cm = table(logit_pred,test$Attrition)
+print(cm)
+tn = cm[1]
+fn = cm[2]
+fp = cm[3]
+tp = cm[4]
+sensitivity = tp / (tp + fn)
+specificity = tn / (tn + fp)
+accuracy = (tp + tn) / (tp + tn + fp + fn)
+misclassification_rate = 1 - accuracy
+print(paste("sensitivity: ", round(sensitivity,2)))
+print(paste("specificity: ", round(specificity,2)))
+print(paste("accuracy: ", round(accuracy,2)))
+anova(logit_model,  test="Chisq")
+```
+
+                               Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                     8.52360    3.65533   2.332 0.019710 *  
+OverTimees                     1.88546    0.27330   6.899 5.24e-12 ***
+MonthlyIncome                  -1.34196    0.40549  -3.309 0.000935 ***
+MaritalStatusMarried            1.32144    0.48955   2.699 0.006948 ** 
+MaritalStatusSingle             1.80954    0.48885   3.702 0.000214 ***
+DistanceFromHome                0.03212    0.01599   2.009 0.044504 *  
+JobInvolvement                 -0.58179    0.18703  -3.111 0.001867 ** 
+
+
+
+
+the updated logistic regression model provided the following:
+- Sensitivity = 82%
+- specificity = 86%
+- Missclassificaiton rate = 14%
+
+
+
+```{r}
+submission_  = read.csv("C:/Users/ouska/Desktop/SMU/DOING DS/CaseStudy2_2_2_2_2_2_2/CaseStudy2CompSet-No-Attrition.csv")
+submission_$MonthlyIncome = log(submission_$MonthlyIncome)
+submission_pred = predict(logit_model, newdata=submission_, type='response')
+submission_pred = ifelse(submission_pred > 0.5 ,"Yes","No")
+final_submission = data.table(ID=submission_$ID, Attrition=submission_pred)
+write.table(final_submission, "C:/Users/ouska/Desktop/SMU/DOING DS/CaseStudy2_2_2_2_2_2_2/Case2PredictionsKANTEH Attrition.csv.csv", sep=",", row.names=F)
+```
+
+## Random Forest
+
+
+```{r}
+library(randomForest)
+#rf = randomForest(formula(stepwise), data = train,proximity=TRUE,mtry=2, importance=TRUE )
+rf = randomForest(Attrition ~ OverTime+MonthlyIncome  +JobLevel+ MaritalStatus + TotalWorkingYears +StockOptionLevel + YearsWithCurrManager+YearsAtCompany + Age 
+                  , data = train,proximity=TRUE,mtry=2, importance=TRUE )
+print(rf)
+rf_pred = predict(rf,newdata=test, type="class")
+rf_pred = ifelse(rf_pred > 0.5,1,0)
+cm = table(rf_pred, test$Attrition)
+print(mean(rf_pred==test$Attrition))
+print(cm)
+tn = cm[1]
+fn = cm[2]
+fp = cm[3]
+tp = cm[4]
+sensitivity = tp / (tp + fn)
+specificity = tn / (tn + fp)
+accuracy = (tp + tn) / (tp + tn + fp + fn)
+misclassification_rate = 1 - accuracy
+print(paste("sensitivity: ", round(sensitivity,2)))
+print(paste("specificity: ", round(specificity,2)))
+print(paste("accuracy: ", round(accuracy,2)))
+#confusionMatrix(rf_pred, test_Attrition)
+varImpPlot(rf, sort=T, n.var = 9, main = 'Key Variables')
+plot(rf)
+# https://www.r-bloggers.com/variable-importance-plot-and-variable-selection/
+(VI_F=importance(rf))
+barplot(t(VI_F/sum(VI_F)))
+```
+
+### KNN
+
+
+```{r}
+sepwise_variables = c("Attrition","Age","DistanceFromHome","JobInvolvement","JobLevel","JobSatisfaction",
+    "MonthlyIncome","TotalWorkingYears","TrainingTimesLastYear", 
+    "WorkLifeBalance","YearsSinceLastPromotion","YearsWithCurrManager", "JobRole")
+numerica_var = c("Attrition","Age","DistanceFromHome","JobInvolvement","JobLevel","JobSatisfaction",
+    "MonthlyIncome","TotalWorkingYears","TrainingTimesLastYear", 
+    "WorkLifeBalance","YearsSinceLastPromotion","YearsWithCurrManager")
+categorical_var = c("JobRole")
+knn_CaseStudy2_data = CaseStudy2_data[,sepwise_variables]
+knn_CaseStudy2_data = fastDummies::dummy_cols(knn_CaseStudy2_data, select_columns=categorical_var, remove_first_dummy=TRUE)
+knn_CaseStudy2_data = knn_CaseStudy2_data[,!(names(knn_CaseStudy2_data) %in% categorical_var)]
+colnames(knn_CaseStudy2_data)[which(colnames(knn_CaseStudy2_data) %in% c("JobRole_Manufacturing Director","JobRole_Research Director",
+                                               "JobRole_Research Scientist","JobRole_Sales Representative",
+                                               "JobRole_Healthcare Representative","JobRole_Human Resources",
+                                               "JobRole_Laboratory Technician") )] <- c("role_manf_direc","role_director",
+                                                            "role_science", "rolesales_rep", "role_healthrep",
+                                                            "role_HR", "role_lab"
+                                                                                                                )
+knn_CaseStudy2_data$travel_freq = ifelse(CaseStudy2_data$BusinessTravel == "Travel_Frequently", 1, 0)
+knn_CaseStudy2_data$male = ifelse(CaseStudy2_data$Gender == "Male", 1, 0)
+knn_CaseStudy2_data$OT = ifelse(CaseStudy2_data$OverTime == "Yes", 1, 0)
+paste(names(knn_CaseStudy2_data), collapse = " + ")
+```
+
+
+___test train__
+```{r}
+smp_size <- floor(0.7 * nrow(knn_CaseStudy2_data))
+## set the seed to make your partition reproducible
+set.seed(234)
+train_ind <- sample(seq_len(nrow(knn_CaseStudy2_data)), size = smp_size, replace=FALSE)
+train = knn_CaseStudy2_data[train_ind,]
+test =  knn_CaseStudy2_data[-train_ind,]
+dim(train)
+dim(test)
+```
+```{r}
+k3 = knn(train,test,cl=train$Attrition,k=20)
+confusionMatrix(table(test$Attrition,k3))
+```
+
+ 
+# Objective 2 Salary Prediction
+```{r}
+stepwise = step(glm(MonthlyIncome ~ ., data=CaseStudy2_data), direction='both', trace=0)
+formula(stepwise)
+summary(stepwise)
+```
+___test train__
+```{r}
+CaseStudy2_data$TotalWorkingYears_log = log(CaseStudy2_data$TotalWorkingYears+0.5)
+smp_size <- floor(0.7 * nrow(CaseStudy2_data))
+## set the seed to make your partition reproducible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(CaseStudy2_data)), size = smp_size)
+train = CaseStudy2_data[train_ind,]
+test =  CaseStudy2_data[-train_ind,]
+dim(train)
+dim(test)
+```
+```{r}
+lm_model <- lm(MonthlyIncome ~ JobLevel+JobRole+Attrition + TotalWorkingYears_log, data=train)
+print(summary(lm_model))
+plot(lm_model)
+library(tidyverse)
+# http://www.sthda.com/english/articles/38-regression-model-validation/158-regression-model-accuracy-metrics-r-square-aic-bic-cp-and-more/
+lm_pred <- exp(predict(lm_model, test))
+score = data.frame(
+  AdjR2 = (summary(lm_model)$adj.r.squared),
+  RMSE = RMSE(lm_pred, exp(test$MonthlyIncome)),
+  AIC =  (extractAIC(lm_model))
+)
+score
+```
+
+
+```{r}
+library(readxl)
+salary_submission = read_excel("C:/Users/ouska/Desktop/SMU/DOING DS/CaseStudy2_2_2_2_2_2_2/CaseStudy2CompSet-No-Salary.xlsx")
+salary_submission$Attrition = as.numeric(as.factor(salary_submission$Attrition))-1
+salary_submission$TotalWorkingYears_log = log(salary_submission$TotalWorkingYears+0.5)
+submission_pred = exp(predict(lm_model, newdata=salary_submission))
+final_submission = data.table(ID=salary_submission$ID, MonthlyIncome=submission_pred)
+write.table(final_submission, "C:/Users/ouska/Desktop/SMU/DOING DS/CaseStudy2_2_2_2_2_2_2/Case2PredictionsKANTEH Salary.csv", sep=",", row.names=F)
+```
+```{r}
+gg <- ggplot(CaseStudy2_data, aes(x=exp(MonthlyIncome), y=TotalWorkingYears)) + 
+  geom_point(aes(col=JobLevel)) + 
+  geom_smooth(method="loess", se=F) + 
+  labs( 
+       y="TotalWorkingYears", 
+       x="MonthlyIncome", 
+       title="Scatterplot of Monthly Income vs TotalWorking Years")
+plot(gg)
+```
+The scatterplot above shows a clear indicate that monthly income and Total Working years are related as well as JobLevel. Each of these are positively correlated. 
+```{r}
+```
