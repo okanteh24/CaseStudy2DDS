@@ -1,6 +1,6 @@
 ---
 title: "Talent Management Solutions"
-author: "Ousman"
+author: "Ousman Kanteh"
 date: "8/7/2020"
 output:
   html_document: default
@@ -61,7 +61,7 @@ plot(CaseStudy2_data$YearsAtCompany);summary(CaseStudy2_data$YearsAtCompany)
 ```
 
 
-
+#drop column Non-Predictors columns
 ```{r}
 columns_to_drop = c("ID", "EmployeeNumber", "Over18", "StandardHours", "EmployeeCount" )
 CaseStudy2_data = CaseStudy2_data[,!(names(CaseStudy2_data) %in% columns_to_drop)]
@@ -78,7 +78,7 @@ g + geom_bar(aes(fill=Attrition), width = 0.5) +
   labs(title="Histogram on Job Role and Attrition") 
 ```
 
-looks like we should do a log transformaiton
+
 ```{r}
 hist(CaseStudy2_data$MonthlyIncome)
 ```
