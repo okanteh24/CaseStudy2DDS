@@ -82,7 +82,7 @@ looks like we should do a log transformaiton
 ```{r}
 hist(CaseStudy2_data$MonthlyIncome)
 ```
-__log Trasformaitons__
+_log Trasformaitons_
 ```{r}
 #attach(CaseStudy2_data)
 CaseStudy2_data$Attrition <- factor(CaseStudy2_data$Attrition)
@@ -156,7 +156,7 @@ formula(stepwise)
 summary(stepwise)
 ```
 
-__test train split__
+_test train split_
 
 ```{r}
 smp_size <- floor(0.7 * nrow(CaseStudy2_data))
@@ -172,8 +172,7 @@ dim(test)
 
 
 
-
-### Logistic Model
+# Logistic Model
 after several stepwise regression and model selection experiments... 
 
 ```{r}
@@ -287,7 +286,7 @@ paste(names(knn_CaseStudy2_data), collapse = " + ")
 ```
 
 
-___test train__
+_test train__
 ```{r}
 smp_size <- floor(0.7 * nrow(knn_CaseStudy2_data))
 ## set the seed to make your partition reproducible
@@ -310,7 +309,7 @@ stepwise = step(glm(MonthlyIncome ~ ., data=CaseStudy2_data), direction='both', 
 formula(stepwise)
 summary(stepwise)
 ```
-___test train__
+_test train__
 ```{r}
 CaseStudy2_data$TotalWorkingYears_log = log(CaseStudy2_data$TotalWorkingYears+0.5)
 smp_size <- floor(0.7 * nrow(CaseStudy2_data))
