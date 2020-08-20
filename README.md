@@ -6,3 +6,5 @@ The repository includes an RMarkdown file, my prediction .csv file, and a link t
 
 youtube link
 https://youtu.be/JcB3K_NhV4w
+
+https://www.shinyapps.io/admin/#/application/2669152
